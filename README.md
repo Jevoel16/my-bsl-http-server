@@ -1,0 +1,1 @@
+A low-level HTTP Web Server from scratch using the Bonezegei Scripting Language (BSL) and the BSL Socket Library.`
