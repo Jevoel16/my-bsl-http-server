@@ -1,0 +1,198 @@
+include("lib/socket.bzg");
+// 1. Init 
+if (socket_init() <0){
+    print("Socket Failed");
+}
+else{
+    print("Socket Ready");
+}
+
+// 2. Create
+var server = socket_create(); 
+if(server < 0 ){
+    print("Socket Creation Failed");
+}
+
+// 3. Bind Server will be at port 8080
+if (socket_bind(server, 0, 8080) < 0) {
+    print("Socket Bind failed.");
+}
+
+// 4. Listen
+if (socket_listen(server, 5) < 0) {
+    print("socket_listen() failed.");
+}
+
+print("Server running on http://localhost:8080/\n");
+
+while(1){
+
+    // 5. Accept
+    var client = socket_accept(server);
+    print("Client connected!\n");
+    
+    var data = socket_read(client, 1024);
+        
+    if ( sizeof(data) >= 0) {
+        print("Received Request:\n" + data);
+        var BODY = "";
+        var HTTP = "";
+        var match = regex("/.* HTTP/1.1", data);
+        var path = substr(match, 0, sizeof(match) - 9);
+
+        print("File Requested: " + path); 
+
+        if (path == "/") {
+            path = "index"; // remove leading slash
+            print("Serving file: " + path);
+            BODY = "<!DOCTYPE html>"                   
+                +"<html>"
+                +"<head>"
+                +"<title>BSL Server - Home</title>"
+                +"<style>
+                body {
+                    margin: 0;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    font-family: sans-serif;
+                    text-align: center;
+                    gap: 8px;
+                }
+
+                h1 {
+                    margin: 0;
+                    color: #0f766e;
+                }
+                footer {
+                    position: fixed;
+                    bottom: 1.5rem;
+                    font-size: 0.875rem;
+                    color: #64748b;
+                    letter-spacing: 0.025em;
+                }
+                </style>"
+                +"</head>"
+                +"</head>"
+                +"<body style='font-family:sans-serif;'>"
+                +"<h1 style='color:#0f766e;'>Welcome to BSL HTTP Server</h1>"
+                +"<p>This is the default landing page served on route '/'</p>"
+                +"</body>"
+                +"<footer>"
+                +"This is the work of <strong>sprucetrap</strong>&trade;"
+                +"</footer>"
+                +"</html>";
+
+            HTTP = "HTTP/1.1 200 OK\r\n"                
+                +"Content-Type: text/html\r\n"       
+                +"Content-Length: "+ sizeof(BODY)+"\r\n"    
+                +"Connection: close\r\n"
+                +"\r\n";
+        }
+        
+        else if (path == "/about") {
+            path[0] = " "; // remove leading slash
+            print("Serving file: " + path);
+
+            BODY = "<!DOCTYPE html>"                   
+                +"<html>"
+                +"<head>"
+                +"<title>BSL Server - About</title>"
+                +"<style>
+                body {
+                    margin: 0;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    font-family: sans-serif;
+                    text-align: center;
+                    gap: 8px;
+                }
+
+                h1 {
+                    margin: 0;
+                    color: #0f766e;
+                }
+                footer {
+                    position: fixed;
+                    bottom: 1.5rem;
+                    font-size: 0.875rem;
+                    color: #64748b;
+                    letter-spacing: 0.025em;
+                }
+                </style>"
+                +"</head>"
+                +"<body>"
+                +"<h1>About BSL HTTP Server</h1>"
+                +"<p>This page contains information about the BSL HTTP Server project.</p>"
+                +"</body>"
+                +"<footer>"
+                +"This is the work of <strong>sprucetrap</strong>&trade;"
+                +"</footer>"
+                +"</html>";
+
+            HTTP = "HTTP/1.1 200 OK\r\n" 
+                + "Content-Type: text/html\r\n"
+                +"Content-Length: "+ sizeof(BODY)+"\r\n"    
+                +"Connection: close\r\n"
+                +"\r\n";
+        }
+        else {
+            path[0] = " "; // remove leading slash
+            print("File not found: " + path);
+            BODY = "<!DOCTYPE html><html>"
+                +"<head>"
+                +"<title>404 Not Found</title>"
+                +"<style>
+                body {
+                    margin: 0;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    font-family: sans-serif;
+                    text-align: center;
+                    gap: 8px;
+                }
+
+                h1 {
+                    margin: 0;
+                    color: #e11d48;
+                }
+                footer {
+                    position: fixed;
+                    bottom: 1.5rem;
+                    font-size: 0.875rem;
+                    color: #64748b;
+                    letter-spacing: 0.025em;
+                }
+                </style>"
+                +"</head>"
+                +"<body>"
+                +"<h1>404 - Page Not Found</h1>"
+                +"<p>The requested route does not exist on this BSL Server.</p>"
+                +"</body>"
+                +"<footer>"
+                +"This is the work of <strong>sprucetrap</strong>&trade;"
+                +"</footer>"
+                +"</html>";
+
+            HTTP =  "HTTP/1.1 404 Not Found\r\n"                
+                +"Content-Type: text/html\r\n"       
+                +"Content-Length: "+ sizeof(BODY)+"\r\n"    
+                +"Connection: close\r\n"
+                +"\r\n";
+        }                          
+
+        socket_write(client, HTTP+BODY, sizeof(HTTP+BODY));
+        socket_close(client); //
+        gc();   // manual garbage collection
+    }
+}    
+
+socket_cleanup();
