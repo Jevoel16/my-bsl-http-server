@@ -1,6 +1,6 @@
 # Project Description
 
-A low-level HTTP Web Server built from scratch using the Bonezegei Scripting Language (BSL) and the BSL Socket Library. Its purpose is to explore fundamental network programming, configure a clean development environment in Visual Studio Code, maintain a public GitHub repository under the MIT License, enforce proper syntax mapping via `.gitattributes`, and implement custom HTTP route handling for `/`, `/about`, and generic `404 Not Found` responses.
+A low-level HTTP Web Server built from scratch using the Bonezegei Scripting Language (BSL) and the BSL Socket Library developed by Jofel A. Batutay. Its purpose is to explore fundamental network programming, configure a clean development environment in Visual Studio Code, maintain a public GitHub repository under the MIT License, enforce proper syntax mapping via `.gitattributes`, and implement custom HTTP route handling for `/`, `/about`, and generic `404 Not Found` responses.
 
 ---
 
@@ -59,13 +59,13 @@ bonezegei -inline "print(\"Hello World\");"
 Install the official Bonezegei Socket Library package required for TCP and HTTP operations:
 
 ```bash
-bonezegei -pkg install Bonezegei_Socket
+bzg install socket
 ```
 
 Verify installed packages:
 
 ```bash
-bonezegei -pkg list
+bzg -list
 ```
 
 ---
@@ -80,7 +80,7 @@ git clone https://github.com/Jevoel16/my-bsl-http-server.git
 cd my-bsl-http-server
 
 # Run the server
-bonezegei http.bzg
+bonezegei src/http.bzg
 ```
 
 By default, the server binds to port `8080` (or your configured port) and begins listening for incoming HTTP connections.
