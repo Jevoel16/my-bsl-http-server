@@ -1,198 +1,114 @@
+// Include the BSL socket library (Installed via "bzg install socket")
 include("lib/socket.bzg");
-// 1. Init 
-if (socket_init() <0){
-    print("Socket Failed");
-}
-else{
-    print("Socket Ready");
+
+// 1. Initialize Socket
+if (socket_init() < 0) {
+    print("Socket Initialization Failed\n");
+} else {
+    print("Socket Ready\n");
 }
 
-// 2. Create
-var server = socket_create(); 
-if(server < 0 ){
-    print("Socket Creation Failed");
+// 2. Create Socket Server
+var server = socket_create();
+if (server < 0) {
+    print("Socket Creation Failed\n");
 }
 
-// 3. Bind Server will be at port 8080
+// 3. Bind Server to Port 8080
 if (socket_bind(server, 0, 8080) < 0) {
-    print("Socket Bind failed.");
+    print("Socket Bind Failed.\n");
 }
 
-// 4. Listen
+// 4. Listen for incoming connections
 if (socket_listen(server, 5) < 0) {
-    print("socket_listen() failed.");
+    print("socket_listen() Failed.\n");
 }
 
 print("Server running on http://localhost:8080/\n");
 
-while(1){
+// Custom: shared page styling (centered layout + footer) and footer credit for every route
+var STYLE = "<style>"
+    + "body{margin:0;min-height:100vh;display:flex;flex-direction:column;"
+    + "justify-content:center;align-items:center;font-family:sans-serif;text-align:center;gap:8px;}"
+    + "h1{margin:0;}"
+    + "ul{margin:8px 0 0;padding:0;list-style:none;line-height:1.8;}"
+    + "footer{position:fixed;bottom:1.5rem;font-size:0.875rem;color:#64748b;letter-spacing:0.025em;}"
+    + "nav{position:fixed;top:0;left:0;right:0;display:flex;justify-content:center;gap:24px;"
+    + "padding:16px;background:#f1f5f9;border-bottom:1px solid #e2e8f0;}"
+    + "nav a{color:#0f766e;text-decoration:none;font-weight:bold;}"
+    + "nav a:hover{text-decoration:underline;}"
+    + "</style>";
+var FOOTER = "<footer>This is the work of <strong>sprucetrap</strong>&trade;</footer>";
+// Custom: nav bar on every page for quick route switching; /contact has no route on purpose, so it shows the 404 page
+var NAV = "<nav><a href='/'>Home</a><a href='/about'>About</a><a href='/contact'>Contact</a></nav>";
 
-    // 5. Accept
+while (1) {
+    // 5. Accept Client Connection
     var client = socket_accept(server);
     print("Client connected!\n");
-    
+
     var data = socket_read(client, 1024);
-        
-    if ( sizeof(data) >= 0) {
+
+    if (sizeof(data) >= 0) {
         print("Received Request:\n" + data);
+
         var BODY = "";
         var HTTP = "";
-        var match = regex("/.* HTTP/1.1", data);
-        var path = substr(match, 0, sizeof(match) - 9);
 
-        print("File Requested: " + path); 
+        // Route Handling Logic
+        // Custom: BSL v1.3.3 has no string .indexOf(), so regex() does the same check
+        // (it returns "" when there is no match, so sizeof > 0 means "found")
+        if (sizeof(regex("GET / ", data)) > 0 || sizeof(regex("GET /HTTP", data)) > 0) {
+            BODY = "<!DOCTYPE html><html><head><title>BSL Server - Home</title>" + STYLE + "</head>"
+                + "<body style='font-family:sans-serif;'>" + NAV
+                + "<h1 style='color:#0f766e;'>Welcome to BSL HTTP Server</h1>"
+                + "<p>This is the default landing page served on route '/'</p>"
+                + FOOTER
+                + "</body></html>";
 
-        if (path == "/") {
-            path = "index"; // remove leading slash
-            print("Serving file: " + path);
-            BODY = "<!DOCTYPE html>"                   
-                +"<html>"
-                +"<head>"
-                +"<title>BSL Server - Home</title>"
-                +"<style>
-                body {
-                    margin: 0;
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    font-family: sans-serif;
-                    text-align: center;
-                    gap: 8px;
-                }
-
-                h1 {
-                    margin: 0;
-                    color: #0f766e;
-                }
-                footer {
-                    position: fixed;
-                    bottom: 1.5rem;
-                    font-size: 0.875rem;
-                    color: #64748b;
-                    letter-spacing: 0.025em;
-                }
-                </style>"
-                +"</head>"
-                +"</head>"
-                +"<body style='font-family:sans-serif;'>"
-                +"<h1 style='color:#0f766e;'>Welcome to BSL HTTP Server</h1>"
-                +"<p>This is the default landing page served on route '/'</p>"
-                +"</body>"
-                +"<footer>"
-                +"This is the work of <strong>sprucetrap</strong>&trade;"
-                +"</footer>"
-                +"</html>";
-
-            HTTP = "HTTP/1.1 200 OK\r\n"                
-                +"Content-Type: text/html\r\n"       
-                +"Content-Length: "+ sizeof(BODY)+"\r\n"    
-                +"Connection: close\r\n"
-                +"\r\n";
-        }
-        
-        else if (path == "/about") {
-            path[0] = " "; // remove leading slash
-            print("Serving file: " + path);
-
-            BODY = "<!DOCTYPE html>"                   
-                +"<html>"
-                +"<head>"
-                +"<title>BSL Server - About</title>"
-                +"<style>
-                body {
-                    margin: 0;
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    font-family: sans-serif;
-                    text-align: center;
-                    gap: 8px;
-                }
-
-                h1 {
-                    margin: 0;
-                    color: #0f766e;
-                }
-                footer {
-                    position: fixed;
-                    bottom: 1.5rem;
-                    font-size: 0.875rem;
-                    color: #64748b;
-                    letter-spacing: 0.025em;
-                }
-                </style>"
-                +"</head>"
-                +"<body>"
-                +"<h1>About BSL HTTP Server</h1>"
-                +"<p>This page contains information about the BSL HTTP Server project.</p>"
-                +"</body>"
-                +"<footer>"
-                +"This is the work of <strong>sprucetrap</strong>&trade;"
-                +"</footer>"
-                +"</html>";
-
-            HTTP = "HTTP/1.1 200 OK\r\n" 
+            HTTP = "HTTP/1.1 200 OK\r\n"
                 + "Content-Type: text/html\r\n"
-                +"Content-Length: "+ sizeof(BODY)+"\r\n"    
-                +"Connection: close\r\n"
-                +"\r\n";
+                + "Content-Length: " + sizeof(BODY) + "\r\n"
+                + "Connection: close\r\n\r\n";
+
+        } else if (sizeof(regex("GET /about", data)) > 0) {
+            BODY = "<!DOCTYPE html><html><head><title>BSL Server - About</title>" + STYLE + "</head>"
+                + "<body style='font-family:sans-serif;'>" + NAV
+                + "<h1 style='color:#0f766e;'>About BSL HTTP Server</h1>"
+                + "<p>This page contains information about the BSL HTTP Server project.</p>"
+                + "<p>A low-level HTTP web server built from scratch with the Bonezegei Scripting Language (BSL) and the BSL Socket Library.</p>"
+                + "<ul>"
+                + "<li><strong>Course:</strong> ITE183 &ndash; Lab 1: Building an HTTP Server using Socket</li>"
+                + "<li><strong>Developer:</strong> sprucetrap (GitHub: Jevoel16)</li>"
+                + "<li><strong>Port:</strong> 8080</li>"
+                + "<li><strong>Routes:</strong> / (home), /about (this page), anything else (including /contact) returns 404 Not Found</li>"
+                + "</ul>"
+                + FOOTER
+                + "</body></html>";
+
+            HTTP = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: text/html\r\n"
+                + "Content-Length: " + sizeof(BODY) + "\r\n"
+                + "Connection: close\r\n\r\n";
+
+        } else {
+            BODY = "<!DOCTYPE html><html><head><title>404 Not Found</title>" + STYLE + "</head>"
+                + "<body style='font-family:sans-serif;'>" + NAV
+                + "<h1 style='color:#e11d48;'>404 - Page Not Found</h1>"
+                + "<p>The requested route does not exist on this BSL Server.</p>"
+                + FOOTER
+                + "</body></html>";
+
+            HTTP = "HTTP/1.1 404 Not Found\r\n"
+                + "Content-Type: text/html\r\n"
+                + "Content-Length: " + sizeof(BODY) + "\r\n"
+                + "Connection: close\r\n\r\n";
         }
-        else {
-            path[0] = " "; // remove leading slash
-            print("File not found: " + path);
-            BODY = "<!DOCTYPE html><html>"
-                +"<head>"
-                +"<title>404 Not Found</title>"
-                +"<style>
-                body {
-                    margin: 0;
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    font-family: sans-serif;
-                    text-align: center;
-                    gap: 8px;
-                }
 
-                h1 {
-                    margin: 0;
-                    color: #e11d48;
-                }
-                footer {
-                    position: fixed;
-                    bottom: 1.5rem;
-                    font-size: 0.875rem;
-                    color: #64748b;
-                    letter-spacing: 0.025em;
-                }
-                </style>"
-                +"</head>"
-                +"<body>"
-                +"<h1>404 - Page Not Found</h1>"
-                +"<p>The requested route does not exist on this BSL Server.</p>"
-                +"</body>"
-                +"<footer>"
-                +"This is the work of <strong>sprucetrap</strong>&trade;"
-                +"</footer>"
-                +"</html>";
-
-            HTTP =  "HTTP/1.1 404 Not Found\r\n"                
-                +"Content-Type: text/html\r\n"       
-                +"Content-Length: "+ sizeof(BODY)+"\r\n"    
-                +"Connection: close\r\n"
-                +"\r\n";
-        }                          
-
-        socket_write(client, HTTP+BODY, sizeof(HTTP+BODY));
-        socket_close(client); //
-        gc();   // manual garbage collection
+        socket_write(client, HTTP + BODY, sizeof(HTTP + BODY));
+        socket_close(client);
+        gc(); // Manual Garbage Collection
     }
-}    
+}
 
 socket_cleanup();
